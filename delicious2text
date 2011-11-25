@@ -1,0 +1,65 @@
+#!/usr/bin/env node
+var request = require('request');
+var program = require('commander');
+
+// parse options
+program
+    .version('0.1')
+    .option('-u, --username <username>',   'User\'s login name on Delicious')
+    .option('-t, --tags <tags>',           'Comma-separated list of tags')
+    .option('-f, --format <format>',       'Output format',  restoreLineBreaks)
+    .option('-s, --separator <separator>', 'Link separator', restoreLineBreaks)
+    .parse(process.argv);
+
+// check options presence
+if( ! (
+    program.username &&
+    program.tags     &&
+    program.format   &&
+    program.separator
+)){
+    console.error('---------------------------------');
+    console.error('Error: missing mandatory options!');
+    console.error('---------------------------------');
+    
+    console.log(program.helpInformation());
+    process.exit(1);
+}
+
+
+// extract options
+var username      = program.username,
+    tags          = program.tags.split(',').join('+'),
+    linkFormat    = program.format,
+    linkSeparator = program.separator;
+
+var url = 'http://feeds.delicious.com/v2/json/' + username + '/' + tags;
+
+// send request to the Delicious API
+request(url, function(err, response, body){
+    if (!err && response.statusCode === 200) {
+        var json = JSON.parse(body);
+        var text = delicious2text(json, linkFormat, linkSeparator);
+        console.log(text);
+    } else {
+        console.log('Something is wrong', response.statusCode, err);
+    }
+});
+
+// converts an array of delicious links into text
+function delicious2text(links, linkFormat, linkSeparator){
+    var linkTexts = [];
+    links.forEach(function(link){
+        var linkText = linkFormat.replace(/%([\w]+)/g, function(match, linkAttribute){
+            return link[linkAttribute];
+        });
+        linkTexts.push(linkText);
+    });
+    return linkTexts.join(linkSeparator);
+}
+
+// \n on the command line is in fact \\n
+// we need to restore real line breaks
+function restoreLineBreaks(str){
+    return str.replace(/\\n/g, '\n');
+}
