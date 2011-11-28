@@ -7,6 +7,12 @@ Description
 Super simple script to fetch some delicious links and output them in
 text format.
 
+Dependencies
+------------
+
+ - [request](https://github.com/mikeal/request) (`npm install request`)
+ - [commander](https://github.com/visionmedia/commander.js) (`npm install commander`)
+
 Usage
 -----
 
